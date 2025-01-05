@@ -1,0 +1,79 @@
+# vim: ft=zsh
+#
+# A theme based on Steve Losh's Extravagant Prompt.
+#
+# Authors:
+#   Steve Losh <steve@stevelosh.com>
+#   Bart Trojanowski <bart@jukie.net>
+#   Brian Carper <brian@carper.ca>
+#   steeef <steeef@gmail.com>
+#   Sorin Ionescu <sorin.ionescu@gmail.com>
+#   Christian van Onzenoodt <c.onzenoodt@gmail.com>
+#
+
+function prompt_onze_precmd {
+  # Get Git repository information.
+  if (( $+functions[git-info] )); then
+    git-info
+  fi
+
+  if (( $+functions[python-info] )); then
+    python-info
+  fi
+}
+
+function user_host {
+  if [[ -n $SSH_CONNECTION ]]; then
+    echo "%F{magenta}%n%f@%F{yellow}%m%f:"
+  elif [[ $LOGNAME != $USER ]]; then
+    echo "%F{magenta}%n%f:"
+  fi
+}
+
+function prompt_onze_setup {
+  setopt LOCAL_OPTIONS
+  unsetopt XTRACE KSH_ARRAYS
+  prompt_opts=(cr percent sp subst)
+
+  # Load required functions.
+  autoload -Uz add-zsh-hook
+
+  # Add hook for calling git-info before each command.
+  add-zsh-hook precmd prompt_onze_precmd
+
+  # Tell prezto we can manage this prompt
+  zstyle ':prezto:module:prompt' managed 'yes'
+
+  # Set editor-info parameters.
+  zstyle ':prezto:module:editor:info:keymap:primary' format '%B%F{red}❯%F{yellow}❯%F{cyan}❯%f%b'
+
+  # Set python-info parameters.
+  zstyle ':prezto:module:python:info:virtualenv' format '(%v)'
+
+  # Set git-info parameters.
+  zstyle ':prezto:module:git:info' verbose 'yes'
+  zstyle ':prezto:module:git:info:branch' format '%F{yellow}%b%f'
+  zstyle ':prezto:module:git:info:clean' format '%F{green}✔%f'
+  zstyle ':prezto:module:git:info:dirty' format '%F{red}✗%f'
+  zstyle ':prezto:module:git:info:keys' format 'prompt' '%b %C%D'
+
+  local current_time="%F{green}[%f%T%F{green}]%f"
+  local current_dir="%F{blue}%~%f"
+  
+  # Define prompts.
+  PROMPT="
+${current_time} $(user_host)${current_dir}  "'${git_info:+${(e)git_info[prompt]}} $python_info[virtualenv]'"
+"'${editor_info[keymap]} '
+  RPROMPT=''
+}
+
+function prompt_onze_preview {
+  local +h PROMPT=''
+  local +h RPROMPT=''
+  local +h SPROMPT=''
+
+  editor-info 2> /dev/null
+  prompt_preview_theme 'onze'
+}
+
+prompt_onze_setup "$@"
